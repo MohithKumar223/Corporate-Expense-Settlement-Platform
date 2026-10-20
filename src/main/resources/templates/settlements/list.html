@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Advance Settlements</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Advance Settlements</h2>
+                <p class="text-muted mb-0">Reconcile advance disbursements against verified expense receipts (3-Way Engine)</p>
+            </div>
+        </div>
+
+        <!-- Section for Finance Admin: Disbursed Advances Ready for Calculation -->
+        <div class="data-table-wrapper mb-4" sec:authorize="hasRole('FINANCE_ADMIN')">
+            <div class="table-header">
+                <h5>Advances Ready for Settlement Calculation</h5>
+                <span class="badge bg-primary" th:text="${disbursedAdvances != null ? #lists.size(disbursedAdvances) : 0} + ' advances active'">0 active</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Advance #</th>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Disbursed Amount</th>
+                            <th>Disbursed Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${disbursedAdvances == null or #lists.isEmpty(disbursedAdvances)}">
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="bi bi-check2-circle fs-3 text-success d-block mb-1"></i> No un-reconciled advances awaiting settlement calculation.
+                            </td>
+                        </tr>
+                        <tr th:each="adv : ${disbursedAdvances}">
+                            <td class="fw-bold" th:text="${adv.requestNumber}">ADV-101</td>
+                            <td class="fw-semibold" th:text="${adv.employee.fullName}">Jane Smith</td>
+                            <td th:text="${adv.department}">Sales</td>
+                            <td class="fw-bold text-navy">₹<span th:text="${#numbers.formatDecimal(adv.disbursedAmount != null ? adv.disbursedAmount : adv.requestedAmount, 1, 'COMMA', 2, 'POINT')}">15,000</span></td>
+                            <td th:text="${#temporals.format(adv.requestDate, 'dd MMM yyyy')}">Date</td>
+                            <td>
+                                <form th:action="@{'/settlements/calculate/' + ${adv.id}}" method="post">
+                                    <button type="submit" class="btn btn-sm btn-navy">
+                                        <i class="bi bi-calculator me-1"></i> Run Settlement Calculation
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Calculated Settlements Overview Table -->
+        <div class="data-table-wrapper">
+            <div class="table-header">
+                <h5>Reconciled Settlements</h5>
+                <input type="text" id="tableSearch" class="form-control form-control-sm" placeholder="Search settlements..." style="max-width: 200px;">
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Settlement #</th>
+                            <th>Advance #</th>
+                            <th sec:authorize="hasRole('FINANCE_ADMIN')">Employee</th>
+                            <th>Total Disbursed</th>
+                            <th>Total Validated Expenses</th>
+                            <th>Difference</th>
+                            <th>Action Required</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(settlements)}">
+                            <td colspan="9" class="text-center py-4 text-muted">
+                                <i class="bi bi-calculator fs-3 d-block mb-1"></i> No settlements calculated yet.
+                            </td>
+                        </tr>
+                        <tr th:each="set : ${settlements}">
+                            <td class="fw-bold" th:text="${'#SET-' + set.id}">#SET-1</td>
+                            <td>
+                                <a th:href="@{'/advances/view/' + ${set.advanceRequest.id}}" class="fw-semibold text-navy text-decoration-none"
+                                   th:text="${set.advanceRequest.requestNumber}">ADV-101</a>
+                            </td>
+                            <td sec:authorize="hasRole('FINANCE_ADMIN')" th:text="${set.advanceRequest.employee.fullName}">Jane Smith</td>
+                            <td class="fw-semibold">₹<span th:text="${#numbers.formatDecimal(set.totalDisbursed, 1, 'COMMA', 2, 'POINT')}">15,000</span></td>
+                            <td class="fw-semibold text-success">₹<span th:text="${#numbers.formatDecimal(set.totalValidatedExpenses, 1, 'COMMA', 2, 'POINT')}">12,000</span></td>
+                            <td class="fw-bold"
+                                th:classappend="${set.settlementDifference.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? 'text-danger' : (set.settlementDifference.compareTo(T(java.math.BigDecimal).ZERO) < 0 ? 'text-warning' : 'text-success')}">
+                                ₹<span th:text="${#numbers.formatDecimal(set.settlementDifference, 1, 'COMMA', 2, 'POINT')}">3,000</span>
+                            </td>
+                            <td>
+                                <span th:if="${set.status.name() == 'PENDING_RECOVERY'}" class="badge bg-danger-subtle text-danger">
+                                    Employee to Return ₹<span th:text="${set.recoveryAmount}"></span>
+                                </span>
+                                <span th:if="${set.status.name() == 'PENDING_REIMBURSEMENT'}" class="badge bg-warning-subtle text-warning">
+                                    Company to Reimburse ₹<span th:text="${set.reimbursementAmount}"></span>
+                                </span>
+                                <span th:if="${set.status.name() == 'COMPLETED' or set.status.name() == 'SETTLED'}" class="badge bg-success-subtle text-success">
+                                    Fully Balanced
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-status"
+                                      th:classappend="${'badge-' + #strings.toLowerCase(#strings.replace(set.status, '_', ''))}"
+                                      th:text="${set.status}">CALCULATED</span>
+                            </td>
+                            <td>
+                                <a th:href="@{'/settlements/view/' + ${set.id}}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye me-1"></i> Details
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

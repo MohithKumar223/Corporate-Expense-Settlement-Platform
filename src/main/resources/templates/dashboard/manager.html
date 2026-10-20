@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Manager Dashboard</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Manager Dashboard</h2>
+                <p class="text-muted mb-0">Team approvals, advance oversight, and expense requests</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/approvals}" class="btn btn-navy position-relative">
+                    <i class="bi bi-check2-circle me-1"></i> Pending Approvals
+                    <span th:if="${pendingCount > 0}" class="badge bg-danger ms-1" th:text="${pendingCount}">0</span>
+                </a>
+                <a th:href="@{/advances/create}" class="btn btn-outline-primary">
+                    <i class="bi bi-plus-circle me-1"></i> My Advance
+                </a>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="card-label">Pending Approval</div>
+                            <div class="card-value text-warning" th:text="${pendingCount}">0</div>
+                        </div>
+                        <div class="card-icon icon-warning">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="card-label">Direct Reports</div>
+                            <div class="card-value" th:text="${#lists.size(subordinates)}">0</div>
+                        </div>
+                        <div class="card-icon icon-primary">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="card-label">My Advances</div>
+                            <div class="card-value" th:text="${totalAdvances}">0</div>
+                        </div>
+                        <div class="card-icon icon-info">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="card-label">My Expenses</div>
+                            <div class="card-value" th:text="${totalExpenses}">0</div>
+                        </div>
+                        <div class="card-icon icon-success">
+                            <i class="bi bi-receipt-cutoff"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Pending Team Approvals -->
+            <div class="col-lg-8">
+                <div class="data-table-wrapper mb-4">
+                    <div class="table-header">
+                        <h5>Awaiting Your Approval</h5>
+                        <a th:href="@{/approvals}" class="btn btn-sm btn-outline-secondary">Review All</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Req #</th>
+                                    <th>Employee</th>
+                                    <th>Purpose</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(pendingApprovals)}">
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        <i class="bi bi-check-circle fs-3 text-success d-block mb-1"></i> All team requests are up to date!
+                                    </td>
+                                </tr>
+                                <tr th:each="req : ${pendingApprovals}">
+                                    <td class="fw-bold" th:text="${req.requestNumber}">ADV-101</td>
+                                    <td>
+                                        <div class="fw-semibold" th:text="${req.employee.fullName}">Employee Name</div>
+                                        <div class="small text-muted" th:text="${req.employee.department}">Dept</div>
+                                    </td>
+                                    <td th:text="${req.purpose}">Travel</td>
+                                    <td class="fw-bold text-navy">₹<span th:text="${#numbers.formatDecimal(req.requestedAmount, 1, 'COMMA', 2, 'POINT')}">10,000</span></td>
+                                    <td th:text="${#temporals.format(req.requestDate, 'dd MMM yyyy')}">Date</td>
+                                    <td>
+                                        <a th:href="@{'/approvals/review/' + ${req.id}}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-shield-check me-1"></i> Review
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Subordinates List -->
+                <div class="data-table-wrapper">
+                    <div class="table-header">
+                        <h5>Team Members</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Designation</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(subordinates)}">
+                                    <td colspan="5" class="text-center py-3 text-muted">No direct reports assigned.</td>
+                                </tr>
+                                <tr th:each="sub : ${subordinates}">
+                                    <td class="fw-semibold" th:text="${sub.employeeCode}">EMP-01</td>
+                                    <td th:text="${sub.fullName}">Name</td>
+                                    <td class="text-muted" th:text="${sub.email}">email@company.com</td>
+                                    <td th:text="${sub.designation}">Developer</td>
+                                    <td>
+                                        <span class="badge" th:classappend="${sub.active ? 'bg-success' : 'bg-danger'}" th:text="${sub.active ? 'Active' : 'Inactive'}">Active</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications & Guidelines -->
+            <div class="col-lg-4">
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-title fw-bold text-navy mb-2"><i class="bi bi-info-circle me-1"></i> Manager Approval Policy</h6>
+                        <p class="small text-muted mb-2">
+                            • Verify that requested advances align with scheduled business trips or official procurement.<br>
+                            • Requests exceeding ₹50,000 require secondary finance sanction.<br>
+                            • Employees with unsettled previous advances cannot receive new advance funds until reconciled.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="data-table-wrapper">
+                    <div class="table-header">
+                        <h5>Notifications</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <div th:if="${#lists.isEmpty(notifications)}" class="p-3 text-center text-muted small">
+                            No unread notifications
+                        </div>
+                        <div th:each="notif : ${notifications}" class="list-group-item p-3">
+                            <strong class="small d-block" th:text="${notif.type}">Notification</strong>
+                            <p class="mb-0 small text-muted" th:text="${notif.message}">Notification message</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

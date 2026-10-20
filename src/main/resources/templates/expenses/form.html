@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Submit Expense</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Submit Expense Claim</h2>
+                <p class="text-muted mb-0">Record an expense against an approved advance or claim reimbursement</p>
+            </div>
+            <a th:href="@{/expenses}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Expenses
+            </a>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="form-card">
+                    <form th:action="@{/expenses/save}" th:object="${expense}" method="post" enctype="multipart/form-data">
+                        <input type="hidden" th:field="*{id}">
+
+                        <!-- Policy Info Alert -->
+                        <div class="alert alert-primary d-flex align-items-center mb-4">
+                            <i class="bi bi-receipt-cutoff fs-4 me-3"></i>
+                            <div>
+                                <strong class="d-block">Receipt & Category Policies</strong>
+                                Valid tax invoices or digital receipts must be attached for claims exceeding ₹500. Ensure category limits match policy guidelines.
+                            </div>
+                        </div>
+
+                        <!-- Link with Disbursed Advance (Optional) -->
+                        <div class="mb-3">
+                            <label class="form-label">Link to Advance Request (Optional)</label>
+                            <select name="advanceRequestId" class="form-select">
+                                <option value="">-- Out-of-pocket claim (No Advance) --</option>
+                                <option th:each="adv : ${advances}"
+                                        th:value="${adv.id}"
+                                        th:text="${adv.requestNumber + ' - ' + adv.purpose + ' (Disbursed: ₹' + (adv.disbursedAmount != null ? adv.disbursedAmount : 0) + ')'}">
+                                    ADV-101 - Client Visit
+                                </option>
+                            </select>
+                            <div class="form-text">Select an advance if this expense was paid using corporate advance cash.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Expense Category *</label>
+                                <select th:field="*{category}" class="form-select" required>
+                                    <option value="">Select Category</option>
+                                    <option value="Travel">Travel (Flight / Train / Cab)</option>
+                                    <option value="Accommodation">Accommodation (Hotel / Stay)</option>
+                                    <option value="Meals">Meals & Daily Per Diem</option>
+                                    <option value="Equipment">Equipment / Hardware</option>
+                                    <option value="Office Supplies">Office Supplies & Stationery</option>
+                                    <option value="Communication">Internet & Communication</option>
+                                    <option value="Other">Other Official Business</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Amount (₹) *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" step="0.01" min="1" th:field="*{amount}" class="form-control" placeholder="2500.00" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Date of Expense *</label>
+                                <input type="date" th:field="*{expenseDate}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Upload Receipt / Invoice</label>
+                                <input type="file" name="receipt" class="form-control" accept="image/*,.pdf">
+                                <div class="form-text">Accepts PDF, PNG, JPG up to 16MB.</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Expense Description & Merchant Details *</label>
+                            <textarea th:field="*{description}" class="form-control" rows="3" placeholder="e.g. Uber cab from Airport to Hotel + Hotel Taj 2 nights accommodation..." required></textarea>
+                        </div>
+
+                        <!-- Policy guidance pills -->
+                        <div class="card bg-light border-0 mb-4" th:if="${not #lists.isEmpty(policies)}">
+                            <div class="card-body py-2">
+                                <span class="fw-semibold small text-muted">Category Ceilings:</span>
+                                <div class="d-flex flex-wrap gap-2 mt-1">
+                                    <span th:each="pol : ${policies}" class="badge bg-white text-dark border">
+                                        <span th:text="${pol.category}">Category</span>: ₹<span th:text="${pol.maxLimit}">0</span>
+                                        <span th:if="${pol.receiptRequired}" class="text-danger ms-1">*receipt</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a th:href="@{/expenses}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-navy">
+                                <i class="bi bi-check-circle me-1"></i> Submit Expense Claim
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

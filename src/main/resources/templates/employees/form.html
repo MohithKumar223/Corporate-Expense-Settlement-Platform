@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title th:text="${employee.id == null ? 'Add Employee' : 'Edit Employee'}">Employee Form</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2 th:text="${employee.id == null ? 'Add New Employee' : 'Edit Employee Profile'}">Employee Form</h2>
+                <p class="text-muted mb-0">Configure employee attributes, organizational hierarchy, and access credentials</p>
+            </div>
+            <a th:href="@{/employees}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Directory
+            </a>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="form-card">
+                    <form th:action="@{/employees/save}" th:object="${employee}" method="post">
+                        <input type="hidden" th:field="*{id}">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" th:field="*{fullName}" class="form-control" placeholder="John Doe" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Employee Code *</label>
+                                <input type="text" th:field="*{employeeCode}" class="form-control" placeholder="EMP101"
+                                       th:readonly="${employee.id != null}" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email Address *</label>
+                                <input type="email" th:field="*{email}" class="form-control" placeholder="john.doe@company.com" required>
+                            </div>
+                            <div class="col-md-6 mb-3" th:if="${employee.id == null}">
+                                <label class="form-label">Temporary Password *</label>
+                                <input type="password" th:field="*{password}" class="form-control" placeholder="••••••••" required minlength="6">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Department *</label>
+                                <select th:field="*{department}" class="form-select" required>
+                                    <option value="">Select Department</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="Sales">Sales</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Human Resources">Human Resources</option>
+                                    <option value="Finance">Finance</option>
+                                    <option value="Operations">Operations</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Designation *</label>
+                                <input type="text" th:field="*{designation}" class="form-control" placeholder="Software Engineer" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">System Role *</label>
+                                <select th:field="*{role}" class="form-select" required>
+                                    <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">EMPLOYEE</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Reporting Manager</label>
+                                <select name="managerId" class="form-select">
+                                    <option value="">-- No Manager (Executive / Top Level) --</option>
+                                    <option th:each="mgr : ${managers}"
+                                            th:value="${mgr.id}"
+                                            th:selected="${employee.manager != null and employee.manager.id == mgr.id}"
+                                            th:text="${mgr.fullName + ' (' + mgr.department + ')'}">
+                                        Manager Name
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-3">
+                            <a th:href="@{/employees}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-navy">
+                                <i class="bi bi-save me-1"></i> Save Employee Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

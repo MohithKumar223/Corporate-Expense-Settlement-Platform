@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Expense Details</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h2 class="mb-0" th:text="${'Expense #EXP-' + expense.id}">#EXP-1</h2>
+                    <span class="badge-status"
+                          th:classappend="${'badge-' + #strings.toLowerCase(expense.status)}"
+                          th:text="${expense.status}">SUBMITTED</span>
+                </div>
+                <p class="text-muted mb-0">Submitted on <span th:text="${#temporals.format(expense.createdAt, 'dd MMM yyyy HH:mm')}">01 Jan 2026</span></p>
+            </div>
+            <div>
+                <a th:href="@{/expenses}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Expenses
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="form-card mb-4">
+                    <h5 class="fw-bold text-navy mb-4 border-bottom pb-2">Expense Details</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Submitted By</span>
+                            <strong th:text="${expense.employee.fullName}">John Doe</strong>
+                            <div class="small text-muted" th:text="${expense.employee.email}">john@company.com</div>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Department</span>
+                            <span th:text="${expense.employee.department}">Engineering</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Category</span>
+                            <span class="badge bg-light text-dark border fs-6 mt-1" th:text="${expense.category}">Travel</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Amount Claimed</span>
+                            <h3 class="text-navy fw-bold mb-0">₹<span th:text="${#numbers.formatDecimal(expense.amount, 1, 'COMMA', 2, 'POINT')}">2,500</span></h3>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Expense Date</span>
+                            <strong th:text="${#temporals.format(expense.expenseDate, 'dd MMM yyyy')}">02 Jan 2026</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Linked Advance</span>
+                            <span th:if="${expense.advanceRequest != null}">
+                                <a th:href="@{'/advances/view/' + ${expense.advanceRequest.id}}" class="fw-semibold text-navy text-decoration-none">
+                                    <i class="bi bi-link-45deg"></i> <span th:text="${expense.advanceRequest.requestNumber + ' (' + expense.advanceRequest.purpose + ')'}">ADV-101</span>
+                                </a>
+                            </span>
+                            <span th:if="${expense.advanceRequest == null}" class="text-muted small">None (Direct Reimbursement)</span>
+                        </div>
+                        <div class="col-12">
+                            <span class="text-muted small d-block">Description</span>
+                            <div class="p-3 bg-light rounded mt-1" th:text="${expense.description}">Flight tickets</div>
+                        </div>
+                        <div class="col-12" th:if="${expense.financeNotes != null}">
+                            <span class="text-muted small d-block">Finance Notes / Resolution</span>
+                            <div class="p-3 bg-warning-subtle text-dark rounded mt-1" th:text="${expense.financeNotes}">Notes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Receipt Attachment Card -->
+                <div class="data-table-wrapper">
+                    <div class="table-header">
+                        <h5>Attached Receipt / Documentation</h5>
+                    </div>
+                    <div class="p-4 text-center">
+                        <div th:if="${expense.receiptPath != null}">
+                            <i class="bi bi-file-earmark-check fs-1 text-primary d-block mb-2"></i>
+                            <div class="fw-semibold mb-1">Receipt File Attached</div>
+                            <div class="small text-muted mb-3" th:text="${expense.receiptPath}">receipt.png</div>
+                            <a th:href="@{'/uploads/' + ${expense.receiptPath}}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> Open Receipt Document
+                            </a>
+                        </div>
+                        <div th:if="${expense.receiptPath == null}" class="text-muted py-3">
+                            <i class="bi bi-file-earmark-x fs-2 d-block mb-1"></i>
+                            <span class="small">No receipt document attached for this expense claim.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Finance Verification Box (Finance Admin Only) -->
+            <div class="col-lg-5" sec:authorize="hasRole('FINANCE_ADMIN')">
+                <div class="card border-0 shadow-sm p-4 sticky-top" style="top: 80px;">
+                    <h5 class="fw-bold text-navy mb-3"><i class="bi bi-shield-check me-1"></i> Finance Audit & Validation</h5>
+
+                    <!-- Validate Form -->
+                    <form th:action="@{'/expenses/validate/' + ${expense.id}}" method="post" class="mb-3">
+                        <div class="mb-2">
+                            <label class="form-label small">Audit Notes</label>
+                            <input type="text" name="notes" class="form-control form-control-sm" placeholder="e.g. GST invoice checked and compliant">
+                        </div>
+                        <button type="submit" class="btn btn-outline-success w-100 btn-sm">
+                            <i class="bi bi-check2-circle me-1"></i> Mark as Validated
+                        </button>
+                    </form>
+
+                    <!-- Approve Form -->
+                    <form th:action="@{'/expenses/approve/' + ${expense.id}}" method="post" class="mb-3">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check-all me-1"></i> Approve Expense Claim
+                        </button>
+                    </form>
+
+                    <div class="border-top pt-3">
+                        <!-- Reject Form -->
+                        <form th:action="@{'/expenses/reject/' + ${expense.id}}" method="post" class="mb-2">
+                            <div class="mb-2">
+                                <input type="text" name="reason" class="form-control form-control-sm" placeholder="Reason for rejection..." required>
+                            </div>
+                            <button type="submit" class="btn btn-outline-danger w-100 btn-sm">
+                                <i class="bi bi-x-circle me-1"></i> Reject Claim
+                            </button>
+                        </form>
+
+                        <!-- Dispute Form -->
+                        <form th:action="@{'/expenses/dispute/' + ${expense.id}}" method="post">
+                            <div class="mb-2">
+                                <input type="text" name="reason" class="form-control form-control-sm" placeholder="Reason for dispute (triggers exception)..." required>
+                            </div>
+                            <button type="submit" class="btn btn-outline-warning w-100 btn-sm">
+                                <i class="bi bi-flag me-1"></i> Flag as Disputed
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

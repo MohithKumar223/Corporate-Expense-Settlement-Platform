@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Exception Details</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h2 class="mb-0" th:text="${'Exception #EX-' + exception.id}">#EX-1</h2>
+                    <span class="badge-status"
+                          th:classappend="${exception.status.name() == 'OPEN' ? 'badge-open' : (exception.status.name() == 'UNDER_INVESTIGATION' ? 'badge-pending' : (exception.status.name() == 'RESOLVED' ? 'badge-resolved' : 'badge-closed'))}"
+                          th:text="${exception.status}">OPEN</span>
+                </div>
+                <p class="text-muted mb-0">Flagged on <span th:text="${#temporals.format(exception.createdAt, 'dd MMM yyyy HH:mm')}">Date</span></p>
+            </div>
+            <div>
+                <a th:href="@{/exceptions}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Exceptions
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="form-card mb-4">
+                    <h5 class="fw-bold text-navy mb-4 border-bottom pb-2">Exception Summary</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Exception Category</span>
+                            <span class="badge bg-danger-subtle text-danger fs-6 mt-1" th:text="${exception.exceptionType}">POLICY_BREACH</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Related Record</span>
+                            <strong th:text="${exception.entityType + ' #' + exception.entityId}">Expense #12</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Assigned Investigator</span>
+                            <strong th:text="${exception.investigatedBy != null ? exception.investigatedBy.fullName : 'Unassigned'}">None</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Resolution Timestamp</span>
+                            <span th:text="${exception.resolvedAt != null ? #temporals.format(exception.resolvedAt, 'dd MMM yyyy HH:mm') : 'Pending Resolution'}">Pending</span>
+                        </div>
+                        <div class="col-12">
+                            <span class="text-muted small d-block">Detailed Finding / Audit Reason</span>
+                            <div class="p-3 bg-light rounded mt-1" th:text="${exception.description}">Exception description</div>
+                        </div>
+                        <div class="col-12" th:if="${exception.resolutionNotes != null}">
+                            <span class="text-muted small d-block">Resolution Statement</span>
+                            <div class="p-3 bg-success-subtle text-dark rounded mt-1" th:text="${exception.resolutionNotes}">Resolution details</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Panel -->
+            <div class="col-lg-5" sec:authorize="hasRole('FINANCE_ADMIN')">
+                <div class="card border-0 shadow-sm p-4 sticky-top" style="top: 80px;">
+                    <h5 class="fw-bold text-navy mb-3"><i class="bi bi-tools me-1"></i> Resolution Workflow</h5>
+
+                    <!-- Step 1: Assign / Start Investigation -->
+                    <form th:if="${exception.status.name() == 'OPEN'}" th:action="@{'/exceptions/investigate/' + ${exception.id}}" method="post" class="mb-4">
+                        <p class="small text-muted">Claim this exception and assign yourself as primary investigator.</p>
+                        <button type="submit" class="btn btn-navy w-100">
+                            <i class="bi bi-person-check me-1"></i> Start Investigation
+                        </button>
+                    </form>
+
+                    <!-- Step 2: Resolve with notes -->
+                    <form th:if="${exception.status.name() == 'OPEN' or exception.status.name() == 'UNDER_INVESTIGATION'}"
+                          th:action="@{'/exceptions/resolve/' + ${exception.id}}" method="post" class="mb-4">
+                        <div class="mb-3">
+                            <label class="form-label">Resolution Findings & Corrective Action *</label>
+                            <textarea name="resolution" class="form-control" rows="3" placeholder="e.g. Employee provided missing tax invoice; approved exception with VP Finance sign-off..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check2-circle me-1"></i> Mark Exception as Resolved
+                        </button>
+                    </form>
+
+                    <!-- Step 3: Close -->
+                    <form th:if="${exception.status.name() == 'RESOLVED'}"
+                          th:action="@{'/exceptions/close/' + ${exception.id}}" method="post">
+                        <p class="small text-muted">Archive and close this exception record permanently.</p>
+                        <button type="submit" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-archive me-1"></i> Close Exception
+                        </button>
+                    </form>
+
+                    <div th:if="${exception.status.name() == 'CLOSED'}" class="text-center text-muted py-3">
+                        <i class="bi bi-check-all fs-2 text-success d-block mb-1"></i>
+                        <span class="small">This exception is permanently closed.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

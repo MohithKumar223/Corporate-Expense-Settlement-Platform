@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Immutable Audit Trail</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Immutable Audit Trail</h2>
+                <p class="text-muted mb-0">Cryptographic-style audit records of all financial events, approvals, disbursements, and settlements</p>
+            </div>
+        </div>
+
+        <div class="data-table-wrapper">
+            <div class="table-header">
+                <h5>Audit Events</h5>
+                <input type="text" id="tableSearch" class="form-control form-control-sm" placeholder="Filter audit trail..." style="max-width: 200px;">
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Log ID</th>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Target Entity</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${auditPage == null or #lists.isEmpty(auditPage.content)}">
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="bi bi-journal-text fs-3 d-block mb-1"></i> No audit logs recorded yet
+                            </td>
+                        </tr>
+                        <tr th:each="log : ${auditPage.content}">
+                            <td class="fw-bold" th:text="${'#LOG-' + log.id}">#LOG-1</td>
+                            <td class="small" th:text="${#temporals.format(log.timestamp, 'dd MMM yyyy HH:mm:ss')}">Timestamp</td>
+                            <td>
+                                <strong th:text="${log.userName}">User</strong>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary" th:text="${log.action}">CREATE</span>
+                            </td>
+                            <td>
+                                <span class="small fw-semibold text-navy" th:text="${log.entityType + ' #' + log.entityId}">AdvanceRequest #1</span>
+                            </td>
+                            <td class="small text-muted" th:text="${log.details}">Action performed</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="p-3 border-top d-flex justify-content-between align-items-center" th:if="${auditPage != null and auditPage.totalPages > 1}">
+                <span class="small text-muted" th:text="${'Showing page ' + (currentPage + 1) + ' of ' + auditPage.totalPages}">Page 1 of 5</span>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{'/audit?page=' + ${currentPage - 1}}">Previous</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage + 1 >= auditPage.totalPages ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{'/audit?page=' + ${currentPage + 1}}">Next</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

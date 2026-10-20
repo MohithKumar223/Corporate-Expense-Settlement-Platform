@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Notifications</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Your Notifications</h2>
+                <p class="text-muted mb-0">Status updates on your advance requests, reviews, and financial alerts</p>
+            </div>
+            <div>
+                <form th:action="@{/notifications/read-all}" method="post">
+                    <button type="submit" class="btn btn-outline-secondary">
+                        <i class="bi bi-check2-all me-1"></i> Mark All as Read
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="data-table-wrapper">
+            <div class="list-group list-group-flush">
+                <div th:if="${notifications == null or #lists.isEmpty(notifications.content)}" class="p-5 text-center text-muted">
+                    <i class="bi bi-bell-slash fs-1 d-block mb-2"></i>
+                    <h5>No notifications found</h5>
+                    <p class="small mb-0">You're all caught up!</p>
+                </div>
+                <div th:each="n : ${notifications.content}" class="list-group-item p-3" th:classappend="${!n.read ? 'bg-light' : ''}">
+                    <div class="d-flex w-100 justify-content-between align-items-center">
+                        <div>
+                            <span class="badge me-2"
+                                  th:classappend="${n.type.name() == 'APPROVAL' ? 'bg-success' : (n.type.name() == 'REJECTION' ? 'bg-danger' : (n.type.name() == 'EXCEPTION' ? 'bg-warning text-dark' : 'bg-primary'))}"
+                                  th:text="${n.type}">UPDATE</span>
+                            <span class="fw-medium" th:text="${n.message}">Notification message</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <small class="text-muted" th:text="${#temporals.format(n.createdAt, 'dd MMM yyyy HH:mm')}">Date</small>
+                            <form th:if="${!n.read}" th:action="@{'/notifications/read/' + ${n.id}}" method="post">
+                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Mark as Read">
+                                    <i class="bi bi-check"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

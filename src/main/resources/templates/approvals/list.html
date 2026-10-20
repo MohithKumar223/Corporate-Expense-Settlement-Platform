@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Pending Approvals</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Pending Approvals</h2>
+                <p class="text-muted mb-0">Review advance requests submitted by your team members</p>
+            </div>
+        </div>
+
+        <div class="data-table-wrapper">
+            <div class="table-header">
+                <h5>Awaiting Decision</h5>
+                <span class="badge bg-navy" th:text="${#lists.size(pendingRequests)} + ' requests pending'">0 requests pending</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Request #</th>
+                            <th>Employee</th>
+                            <th>Purpose</th>
+                            <th>Amount</th>
+                            <th>Requested On</th>
+                            <th>Needed By</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(pendingRequests)}">
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-check2-circle fs-1 text-success d-block mb-2"></i>
+                                <h5>No pending approvals!</h5>
+                                <p class="small mb-0">All submitted advance requests have been evaluated.</p>
+                            </td>
+                        </tr>
+                        <tr th:each="req : ${pendingRequests}">
+                            <td class="fw-bold" th:text="${req.requestNumber}">ADV-101</td>
+                            <td>
+                                <div class="fw-semibold" th:text="${req.employee.fullName}">Jane Smith</div>
+                                <div class="small text-muted" th:text="${req.employee.designation + ' (' + req.department + ')'}">Engineer</div>
+                            </td>
+                            <td>
+                                <div class="fw-medium" th:text="${req.purpose}">Travel to Conference</div>
+                                <div class="small text-muted text-truncate" style="max-width: 250px;" th:text="${req.justification}">Details</div>
+                            </td>
+                            <td class="fw-bold text-navy">₹<span th:text="${#numbers.formatDecimal(req.requestedAmount, 1, 'COMMA', 2, 'POINT')}">15,000</span></td>
+                            <td th:text="${#temporals.format(req.requestDate, 'dd MMM yyyy')}">01 Jan 2026</td>
+                            <td th:text="${req.neededByDate != null ? #temporals.format(req.neededByDate, 'dd MMM yyyy') : '-'}">-</td>
+                            <td>
+                                <a th:href="@{'/approvals/review/' + ${req.id}}" class="btn btn-sm btn-navy">
+                                    <i class="bi bi-shield-check me-1"></i> Review & Decide
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

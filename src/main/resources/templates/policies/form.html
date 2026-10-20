@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title th:text="${policy.id == null ? 'Create Policy' : 'Edit Policy'}">Policy Form</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2 th:text="${policy.id == null ? 'Create Expense Policy' : 'Edit Expense Policy'}">Policy Form</h2>
+                <p class="text-muted mb-0">Define category expenditure limits and enforcement rules</p>
+            </div>
+            <a th:href="@{/policies}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Policies
+            </a>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="form-card">
+                    <form th:action="@{/policies/save}" th:object="${policy}" method="post">
+                        <input type="hidden" th:field="*{id}">
+
+                        <div class="mb-3">
+                            <label class="form-label">Category Name *</label>
+                            <input type="text" th:field="*{category}" class="form-control" placeholder="e.g. Travel, Meals, Accommodation" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Maximum Spend Limit (₹) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" step="0.01" min="1" th:field="*{maxLimit}" class="form-control" placeholder="10000.00" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" role="switch" id="receiptRequired" th:field="*{receiptRequired}">
+                                <label class="form-check-label fw-medium" for="receiptRequired">
+                                    Require Receipt / Invoice for Claims in this Category
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" role="switch" id="active" th:field="*{active}" checked>
+                                <label class="form-check-label fw-medium" for="active">
+                                    Policy is Active
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Description & Policy Notes</label>
+                            <textarea th:field="*{description}" class="form-control" rows="3" placeholder="Guidance for employees when submitting claims in this category..."></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a th:href="@{/policies}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-navy">
+                                <i class="bi bi-save me-1"></i> Save Policy
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

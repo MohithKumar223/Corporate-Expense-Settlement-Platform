@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Advance Request Details</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h2 class="mb-0" th:text="${advance.requestNumber}">ADV-1001</h2>
+                    <span class="badge-status"
+                          th:classappend="${'badge-' + #strings.toLowerCase(#strings.replace(advance.status, '_', ''))}"
+                          th:text="${advance.status}">PENDING_APPROVAL</span>
+                </div>
+                <p class="text-muted mb-0">Created on <span th:text="${#temporals.format(advance.requestDate, 'dd MMM yyyy')}">01 Jan 2026</span></p>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/advances}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+                <form th:if="${advance.status.name() == 'DRAFT'}" th:action="@{'/advances/submit/' + ${advance.id}}" method="post">
+                    <button type="submit" class="btn btn-navy">
+                        <i class="bi bi-send me-1"></i> Submit for Approval
+                    </button>
+                </form>
+                <a th:if="${advance.status.name() == 'APPROVED'}" sec:authorize="hasRole('FINANCE_ADMIN')"
+                   th:href="@{'/disbursements/create/' + ${advance.id}}" class="btn btn-success">
+                    <i class="bi bi-wallet2 me-1"></i> Disburse Advance
+                </a>
+                <form th:if="${advance.status.name() == 'DISBURSED'}" sec:authorize="hasRole('FINANCE_ADMIN')"
+                      th:action="@{'/settlements/calculate/' + ${advance.id}}" method="post">
+                    <button type="submit" class="btn btn-accent">
+                        <i class="bi bi-calculator me-1"></i> Calculate Settlement
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left: Advance details -->
+            <div class="col-lg-8">
+                <div class="form-card mb-4">
+                    <h5 class="fw-bold text-navy mb-4 border-bottom pb-2">Request Information</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Employee</span>
+                            <strong th:text="${advance.employee.fullName}">John Doe</strong>
+                            <span class="text-muted small d-block" th:text="${advance.employee.email}">john@company.com</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Department & Designation</span>
+                            <span th:text="${advance.department}">Engineering</span> — <span th:text="${advance.employee.designation}">Lead</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Requested Amount</span>
+                            <h4 class="text-navy fw-bold mb-0">₹<span th:text="${#numbers.formatDecimal(advance.requestedAmount, 1, 'COMMA', 2, 'POINT')}">10,000</span></h4>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Disbursed Amount</span>
+                            <h4 class="text-success fw-bold mb-0">₹<span th:text="${advance.disbursedAmount != null ? #numbers.formatDecimal(advance.disbursedAmount, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span></h4>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Needed By Date</span>
+                            <span th:text="${advance.neededByDate != null ? #temporals.format(advance.neededByDate, 'dd MMM yyyy') : '-'}">10 Jan 2026</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Return / Completion Date</span>
+                            <span th:text="${advance.returnDate != null ? #temporals.format(advance.returnDate, 'dd MMM yyyy') : '-'}">15 Jan 2026</span>
+                        </div>
+                        <div class="col-12">
+                            <span class="text-muted small d-block">Purpose</span>
+                            <div class="p-2 bg-light rounded mt-1" th:text="${advance.purpose}">Client meeting in Bangalore</div>
+                        </div>
+                        <div class="col-12">
+                            <span class="text-muted small d-block">Business Justification & Breakdown</span>
+                            <div class="p-3 bg-light rounded mt-1" style="white-space: pre-wrap;" th:text="${advance.justification}">Travel justification...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Approval Workflow Timeline -->
+            <div class="col-lg-4">
+                <div class="data-table-wrapper">
+                    <div class="table-header">
+                        <h5>Approval Workflow History</h5>
+                    </div>
+                    <div class="p-3">
+                        <div th:if="${#lists.isEmpty(approvalHistory)}" class="empty-state py-3">
+                            <i class="bi bi-clock-history fs-3 text-muted"></i>
+                            <p class="small mb-0">No approval actions recorded yet.</p>
+                        </div>
+                        <div class="timeline" th:unless="${#lists.isEmpty(approvalHistory)}">
+                            <div th:each="act : ${approvalHistory}" class="border-start border-3 ps-3 pb-3 mb-2"
+                                 th:classappend="${act.decision.name() == 'APPROVED' ? 'border-success' : (act.decision.name() == 'REJECTED' ? 'border-danger' : 'border-primary')}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong class="small" th:text="${act.approver.fullName}">Approver</strong>
+                                    <span class="badge" th:classappend="${act.decision.name() == 'APPROVED' ? 'bg-success' : 'bg-danger'}" th:text="${act.decision}">APPROVED</span>
+                                </div>
+                                <div class="small text-muted" th:text="${#temporals.format(act.decisionDate, 'dd MMM yyyy HH:mm')}">Date</div>
+                                <p class="small text-muted mt-1 mb-0" th:if="${act.comments != null and !#strings.isEmpty(act.comments)}" th:text="${'“' + act.comments + '”'}">Comments</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

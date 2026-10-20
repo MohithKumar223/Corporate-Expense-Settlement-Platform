@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Settlement Statement</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h2 class="mb-0" th:text="${'Settlement #SET-' + settlement.id}">#SET-1</h2>
+                    <span class="badge-status"
+                          th:classappend="${'badge-' + #strings.toLowerCase(#strings.replace(settlement.status, '_', ''))}"
+                          th:text="${settlement.status}">PENDING_RECOVERY</span>
+                </div>
+                <p class="text-muted mb-0">Reconciliation for Advance <strong th:text="${settlement.advanceRequest.requestNumber}">ADV-101</strong></p>
+            </div>
+            <div>
+                <a th:href="@{/settlements}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Settlements
+                </a>
+            </div>
+        </div>
+
+        <!-- 3-Way Balance Calculation Breakdown -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="card-label">1. Total Disbursed</div>
+                    <div class="card-value text-navy">₹<span th:text="${#numbers.formatDecimal(settlement.totalDisbursed, 1, 'COMMA', 2, 'POINT')}">15,000</span></div>
+                    <small class="text-muted">Total funds given</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="card-label">2. Validated Expenses</div>
+                    <div class="card-value text-success">₹<span th:text="${#numbers.formatDecimal(settlement.totalValidatedExpenses, 1, 'COMMA', 2, 'POINT')}">12,000</span></div>
+                    <small class="text-muted">Approved receipts total</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="card-label">3. Settlement Difference</div>
+                    <div class="card-value"
+                         th:classappend="${settlement.settlementDifference.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? 'text-danger' : (settlement.settlementDifference.compareTo(T(java.math.BigDecimal).ZERO) < 0 ? 'text-warning' : 'text-success')}">
+                        ₹<span th:text="${#numbers.formatDecimal(settlement.settlementDifference, 1, 'COMMA', 2, 'POINT')}">3,000</span>
+                    </div>
+                    <small class="text-muted">Disbursed minus Incurred</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="card-label">Current Net Due</div>
+                    <div th:if="${#strings.toString(settlement.status) == 'PENDING_RECOVERY'}" class="card-value text-danger">
+                        ₹<span th:text="${#numbers.formatDecimal(settlement.recoveryAmount, 1, 'COMMA', 2, 'POINT')}">3,000</span>
+                        <div class="card-label mt-1 text-danger">Recovery from Employee</div>
+                    </div>
+                    <div th:if="${#strings.toString(settlement.status) == 'PENDING_REIMBURSEMENT'}" class="card-value text-warning">
+                        ₹<span th:text="${#numbers.formatDecimal(settlement.reimbursementAmount, 1, 'COMMA', 2, 'POINT')}">2,000</span>
+                        <div class="card-label mt-1 text-warning">Reimbursement to Employee</div>
+                    </div>
+                    <div th:if="${#strings.toString(settlement.status) == 'COMPLETED' or #strings.toString(settlement.status) == 'SETTLED'}" class="card-value text-success">
+                        ₹0.00
+                        <div class="card-label mt-1 text-success">Reconciled & Closed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left: Linked Expenses & Recovery Transactions -->
+            <div class="col-lg-7">
+                <!-- Verified Expenses -->
+                <div class="data-table-wrapper mb-4">
+                    <div class="table-header">
+                        <h5>Itemized Verified Expenses</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(expenses)}">
+                                    <td colspan="5" class="text-center py-3 text-muted">No expenses submitted for this advance.</td>
+                                </tr>
+                                <tr th:each="exp : ${expenses}">
+                                    <td class="fw-semibold" th:text="${exp.category}">Travel</td>
+                                    <td th:text="${exp.description}">Train ticket</td>
+                                    <td th:text="${#temporals.format(exp.expenseDate, 'dd MMM yyyy')}">Date</td>
+                                    <td class="fw-bold">₹<span th:text="${#numbers.formatDecimal(exp.amount, 1, 'COMMA', 2, 'POINT')}">1,200</span></td>
+                                    <td>
+                                        <span class="badge-status"
+                                              th:classappend="${'badge-' + #strings.toLowerCase(exp.status)}"
+                                              th:text="${exp.status}">APPROVED</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Recovery Payments Log -->
+                <div class="data-table-wrapper">
+                    <div class="table-header">
+                        <h5>Recovery Transactions Recorded</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount Recovered</th>
+                                    <th>Reference #</th>
+                                    <th>Recorded By</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(recoveries)}">
+                                    <td colspan="5" class="text-center py-3 text-muted">No recovery payments logged yet.</td>
+                                </tr>
+                                <tr th:each="rec : ${recoveries}">
+                                    <td th:text="${#temporals.format(rec.recoveryDate, 'dd MMM yyyy')}">Date</td>
+                                    <td class="fw-bold text-success">₹<span th:text="${#numbers.formatDecimal(rec.amountRecovered, 1, 'COMMA', 2, 'POINT')}">1,000</span></td>
+                                    <td class="text-muted" th:text="${rec.paymentReference != null ? rec.paymentReference : '-'}">REF123</td>
+                                    <td class="small" th:text="${rec.recordedBy != null ? rec.recordedBy.fullName : '-'}">Finance</td>
+                                    <td class="small text-muted" th:text="${rec.remarks != null ? rec.remarks : '-'}">Notes</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Finance Action Panel (Settlement Resolution) -->
+            <div class="col-lg-5" sec:authorize="hasRole('FINANCE_ADMIN')">
+                <!-- Case 1: Recovery Action -->
+                <div class="card border-0 shadow-sm p-4 mb-4" th:if="${settlement.status.name() == 'PENDING_RECOVERY'}">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-arrow-down-left-circle fs-4 text-danger"></i>
+                        <h5 class="fw-bold text-navy mb-0">Record Employee Refund</h5>
+                    </div>
+                    <p class="small text-muted">
+                        Employee spent less than advanced. Record cash receipt, bank deposit, or payroll salary deduction to settle this balance.
+                    </p>
+                    <form th:action="@{'/settlements/recover/' + ${settlement.id}}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Recovery Amount (₹) *</label>
+                            <input type="number" step="0.01" min="1" name="amount" th:value="${settlement.recoveryAmount}" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Payment / Deposit Reference #</label>
+                            <input type="text" name="paymentReference" class="form-control" placeholder="e.g. UPI-REF-91823 or PAYROLL-DEDUCTION">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Remarks</label>
+                            <textarea name="remarks" class="form-control" rows="2" placeholder="Unused travel cash returned via bank transfer..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-check2-circle me-1"></i> Post Recovery Payment
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Case 3: Reimbursement Action -->
+                <div class="card border-0 shadow-sm p-4 mb-4" th:if="${settlement.status.name() == 'PENDING_REIMBURSEMENT'}">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-arrow-up-right-circle fs-4 text-warning"></i>
+                        <h5 class="fw-bold text-navy mb-0">Pay Additional Reimbursement</h5>
+                    </div>
+                    <p class="small text-muted">
+                        Employee spent more than advanced. Process top-up payment for verified additional expenditure.
+                    </p>
+                    <form th:action="@{'/settlements/reimburse/' + ${settlement.id}}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Reimbursement Amount (₹) *</label>
+                            <input type="number" step="0.01" min="1" name="amount" th:value="${settlement.reimbursementAmount}" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100 text-dark">
+                            <i class="bi bi-wallet2 me-1"></i> Process Employee Reimbursement
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Completed State -->
+                <div class="card border-0 shadow-sm p-4 text-center" th:if="${settlement.status.name() == 'COMPLETED' or settlement.status.name() == 'SETTLED'}">
+                    <i class="bi bi-check-circle-fill text-success fs-1 mb-2"></i>
+                    <h5 class="fw-bold text-navy">Settlement Reconciled</h5>
+                    <p class="small text-muted mb-0">
+                        All advance funds and verified expenses are fully accounted for. This settlement is officially closed and archived in the immutable audit log.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

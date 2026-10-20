@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Review Advance Request</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Review Advance Request</h2>
+                <p class="text-muted mb-0">Evaluate legitimacy, business purpose, and budget compliance</p>
+            </div>
+            <a th:href="@{/approvals}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Approvals
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="form-card mb-4">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                        <h5 class="fw-bold text-navy mb-0" th:text="${advance.requestNumber}">ADV-101</h5>
+                        <span class="badge-status badge-pending">PENDING APPROVAL</span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Employee Name</span>
+                            <strong th:text="${advance.employee.fullName}">Jane Smith</strong>
+                            <div class="small text-muted" th:text="${advance.employee.email}">jane@company.com</div>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Department & Designation</span>
+                            <span th:text="${advance.department}">Sales</span> — <span th:text="${advance.employee.designation}">Account Executive</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Requested Amount</span>
+                            <h3 class="text-navy fw-bold mb-0">₹<span th:text="${#numbers.formatDecimal(advance.requestedAmount, 1, 'COMMA', 2, 'POINT')}">15,000</span></h3>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Timeline</span>
+                            <div class="small">
+                                Needed by: <strong th:text="${advance.neededByDate != null ? #temporals.format(advance.neededByDate, 'dd MMM yyyy') : '-'}">-</strong><br>
+                                Return by: <strong th:text="${advance.returnDate != null ? #temporals.format(advance.returnDate, 'dd MMM yyyy') : '-'}">-</strong>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <span class="text-muted small d-block">Purpose</span>
+                            <div class="p-2 bg-light rounded mt-1 fw-medium" th:text="${advance.purpose}">Client meeting</div>
+                        </div>
+                        <div class="col-12">
+                            <span class="text-muted small d-block">Justification / Itemized Expectation</span>
+                            <div class="p-3 bg-light rounded mt-1" style="white-space: pre-wrap;" th:text="${advance.justification}">Travel expenses</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prior History on this request -->
+                <div class="data-table-wrapper" th:unless="${#lists.isEmpty(approvalHistory)}">
+                    <div class="table-header">
+                        <h5>Workflow History</h5>
+                    </div>
+                    <div class="p-3">
+                        <div th:each="hist : ${approvalHistory}" class="border-bottom pb-2 mb-2">
+                            <div class="d-flex justify-content-between">
+                                <strong th:text="${hist.approver.fullName}">Approver</strong>
+                                <span class="badge" th:classappend="${hist.decision.name() == 'APPROVED' ? 'bg-success' : 'bg-danger'}" th:text="${hist.decision}">APPROVED</span>
+                            </div>
+                            <div class="small text-muted" th:text="${#temporals.format(hist.decisionDate, 'dd MMM yyyy HH:mm')}">Date</div>
+                            <p class="small text-muted mb-0" th:if="${hist.comments != null}" th:text="${hist.comments}">Comments</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Decision Box -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm p-4 sticky-top" style="top: 80px;">
+                    <h5 class="fw-bold text-navy mb-3"><i class="bi bi-check2-square me-1"></i> Approver Decision</h5>
+
+                    <!-- Approval Form -->
+                    <form th:action="@{'/approvals/approve/' + ${advance.id}}" method="post" class="mb-4">
+                        <div class="mb-3">
+                            <label class="form-label">Approval Comments (Optional)</label>
+                            <textarea name="comments" class="form-control" rows="3" placeholder="e.g. Approved within quarterly travel budget..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 py-2">
+                            <i class="bi bi-check-lg me-1"></i> Approve Advance Request
+                        </button>
+                    </form>
+
+                    <div class="position-relative text-center my-2">
+                        <hr>
+                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-2 small text-muted">OR</span>
+                    </div>
+
+                    <!-- Rejection Form -->
+                    <form th:action="@{'/approvals/reject/' + ${advance.id}}" method="post" class="mt-3">
+                        <div class="mb-3">
+                            <label class="form-label text-danger">Rejection Reason *</label>
+                            <textarea name="comments" class="form-control" rows="3" placeholder="Explain why the advance is rejected or requires revision..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-outline-danger w-100 py-2">
+                            <i class="bi bi-x-lg me-1"></i> Reject Advance Request
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Advance Disbursements</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Advance Disbursements</h2>
+                <p class="text-muted mb-0">Record and track funds disbursed to employees against approved advances</p>
+            </div>
+        </div>
+
+        <!-- Section 1: Approved Advances Awaiting Disbursement -->
+        <div class="data-table-wrapper mb-4">
+            <div class="table-header">
+                <h5>Approved Advances Awaiting Disbursement</h5>
+                <span class="badge bg-warning text-dark" th:text="${#lists.size(approvedAdvances)} + ' pending disbursement'">0 pending</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Request #</th>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Purpose</th>
+                            <th>Approved Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(approvedAdvances)}">
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="bi bi-check-circle fs-3 text-success d-block mb-1"></i> No approved advances pending disbursement!
+                            </td>
+                        </tr>
+                        <tr th:each="adv : ${approvedAdvances}">
+                            <td class="fw-bold" th:text="${adv.requestNumber}">ADV-101</td>
+                            <td class="fw-semibold" th:text="${adv.employee.fullName}">Jane Smith</td>
+                            <td th:text="${adv.department}">Sales</td>
+                            <td th:text="${adv.purpose}">Client meeting</td>
+                            <td class="fw-bold text-navy">₹<span th:text="${#numbers.formatDecimal(adv.requestedAmount, 1, 'COMMA', 2, 'POINT')}">15,000</span></td>
+                            <td>
+                                <a th:href="@{'/disbursements/create/' + ${adv.id}}" class="btn btn-sm btn-navy">
+                                    <i class="bi bi-wallet2 me-1"></i> Disburse Funds
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 2: Historical Disbursements Log -->
+        <div class="data-table-wrapper">
+            <div class="table-header">
+                <h5>Disbursement History</h5>
+                <input type="text" id="tableSearch" class="form-control form-control-sm" placeholder="Search disbursements..." style="max-width: 200px;">
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Disbursement ID</th>
+                            <th>Advance #</th>
+                            <th>Employee</th>
+                            <th>Amount Disbursed</th>
+                            <th>Payment Method</th>
+                            <th>Reference #</th>
+                            <th>Disbursed Date</th>
+                            <th>Processed By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(disbursements)}">
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-3 d-block mb-1"></i> No disbursements recorded yet
+                            </td>
+                        </tr>
+                        <tr th:each="disb : ${disbursements}">
+                            <td class="fw-bold" th:text="${'#DISB-' + disb.id}">#DISB-1</td>
+                            <td>
+                                <a th:href="@{'/advances/view/' + ${disb.advanceRequest.id}}" class="fw-semibold text-navy text-decoration-none"
+                                   th:text="${disb.advanceRequest.requestNumber}">ADV-101</a>
+                            </td>
+                            <td th:text="${disb.advanceRequest.employee.fullName}">Jane Smith</td>
+                            <td class="fw-bold text-success">₹<span th:text="${#numbers.formatDecimal(disb.disbursedAmount, 1, 'COMMA', 2, 'POINT')}">15,000</span></td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${disb.paymentMethod}">BANK_TRANSFER</span>
+                            </td>
+                            <td class="text-muted" th:text="${disb.paymentReference != null ? disb.paymentReference : '-'}">TXN12345</td>
+                            <td th:text="${#temporals.format(disb.paymentDate, 'dd MMM yyyy')}">02 Jan 2026</td>
+                            <td class="small text-muted" th:text="${disb.disbursedBy != null ? disb.disbursedBy.fullName : '-'}">Finance Officer</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

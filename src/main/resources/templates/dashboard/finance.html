@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Finance Administration Dashboard</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Finance Administration</h2>
+                <p class="text-muted mb-0">Financial oversight, disbursements, settlements, and compliance</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/disbursements}" class="btn btn-navy">
+                    <i class="bi bi-wallet2 me-1"></i> Disburse Funds
+                </a>
+                <a th:href="@{/settlements}" class="btn btn-accent">
+                    <i class="bi bi-calculator me-1"></i> Reconcile Settlements
+                </a>
+                <a th:href="@{/analytics/export/expenses}" class="btn btn-outline-secondary">
+                    <i class="bi bi-download me-1"></i> Export CSV
+                </a>
+            </div>
+        </div>
+
+        <!-- Financial KPI Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="card-label">Total Disbursed</div>
+                            <div class="card-value">₹<span th:text="${totalDisbursed != null ? #numbers.formatDecimal(totalDisbursed, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span></div>
+                        </div>
+                        <div class="card-icon icon-primary">
+                            <i class="bi bi-cash-coin"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="card-label">Validated Expenses</div>
+                            <div class="card-value">₹<span th:text="${totalValidatedExpenses != null ? #numbers.formatDecimal(totalValidatedExpenses, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span></div>
+                        </div>
+                        <div class="card-icon icon-success">
+                            <i class="bi bi-check2-all"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="card-label">Pending Recovery</div>
+                            <div class="card-value text-danger">₹<span th:text="${pendingRecovery != null ? #numbers.formatDecimal(pendingRecovery, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span></div>
+                        </div>
+                        <div class="card-icon icon-danger">
+                            <i class="bi bi-arrow-down-left-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="card-label">Pending Reimbursement</div>
+                            <div class="card-value text-warning">₹<span th:text="${pendingReimbursement != null ? #numbers.formatDecimal(pendingReimbursement, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span></div>
+                        </div>
+                        <div class="card-icon icon-warning">
+                            <i class="bi bi-arrow-up-right-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Operational Status Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="p-3 bg-white rounded border d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="small text-muted">Ready for Disbursement</div>
+                        <h4 class="mb-0 fw-bold" th:text="${approvedAdvances}">0</h4>
+                    </div>
+                    <a th:href="@{/disbursements}" class="btn btn-sm btn-outline-primary">Process</a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-white rounded border d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="small text-muted">Pending Settlements</div>
+                        <h4 class="mb-0 fw-bold" th:text="${pendingSettlements}">0</h4>
+                    </div>
+                    <a th:href="@{/settlements}" class="btn btn-sm btn-outline-primary">Reconcile</a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-white rounded border d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="small text-muted">Open Exceptions</div>
+                        <h4 class="mb-0 fw-bold text-danger" th:text="${openExceptions}">0</h4>
+                    </div>
+                    <a th:href="@{/exceptions}" class="btn btn-sm btn-outline-danger">Review</a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-white rounded border d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="small text-muted">Active Employees</div>
+                        <h4 class="mb-0 fw-bold" th:text="${totalEmployees}">0</h4>
+                    </div>
+                    <a th:href="@{/employees}" class="btn btn-sm btn-outline-secondary">Manage</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Analytics Row (Charts) -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Department Spend Distribution</h6>
+                        <span class="badge bg-light text-dark">Live</span>
+                    </div>
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="deptChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Expense Breakdown by Category</h6>
+                        <span class="badge bg-light text-dark">Live</span>
+                    </div>
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Links & System Status -->
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="data-table-wrapper">
+                    <div class="table-header">
+                        <h5>Financial Actions Queue</h5>
+                    </div>
+                    <div class="p-4">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <h6 class="fw-bold text-navy"><i class="bi bi-wallet2 me-1"></i> Disbursements</h6>
+                                    <p class="small text-muted">Release funds for manager-approved advance applications with payment tracking.</p>
+                                    <a th:href="@{/disbursements}" class="btn btn-sm btn-navy w-100">Go to Disbursements</a>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <h6 class="fw-bold text-navy"><i class="bi bi-calculator me-1"></i> Settlements</h6>
+                                    <p class="small text-muted">Run exact 3-case reconciliation (Recovery, Exact Match, Reimbursement).</p>
+                                    <a th:href="@{/settlements}" class="btn btn-sm btn-navy w-100">Go to Settlements</a>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <h6 class="fw-bold text-navy"><i class="bi bi-shield-lock me-1"></i> Policies</h6>
+                                    <p class="small text-muted">Set departmental expense ceilings, daily per-diems, and receipt guidelines.</p>
+                                    <a th:href="@{/policies}" class="btn btn-sm btn-navy w-100">Manage Policies</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="data-table-wrapper">
+                    <div class="table-header">
+                        <h5>Finance Alerts</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <div th:if="${#lists.isEmpty(notifications)}" class="p-3 text-center text-muted small">
+                            No unread alerts
+                        </div>
+                        <div th:each="notif : ${notifications}" class="list-group-item p-3">
+                            <strong class="small d-block" th:text="${notif.type}">Alert</strong>
+                            <p class="mb-0 small text-muted" th:text="${notif.message}">Alert message</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div layout:fragment="scripts">
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            const deptData = /*[[${expensesByDepartment}]]*/ {};
+            const catData = /*[[${expensesByCategory}]]*/ {};
+
+            // Render Department Chart
+            const deptCtx = document.getElementById('deptChart');
+            if (deptCtx) {
+                const deptLabels = Object.keys(deptData).length ? Object.keys(deptData) : ['Engineering', 'Sales', 'Marketing', 'Finance'];
+                const deptValues = Object.keys(deptData).length ? Object.values(deptData) : [45000, 32000, 18000, 12000];
+
+                new Chart(deptCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: deptLabels,
+                        datasets: [{
+                            label: 'Spend (₹)',
+                            data: deptValues,
+                            backgroundColor: '#3B82F6',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            // Render Category Chart
+            const catCtx = document.getElementById('categoryChart');
+            if (catCtx) {
+                const catLabels = Object.keys(catData).length ? Object.keys(catData) : ['Travel', 'Accommodation', 'Meals', 'Supplies', 'Other'];
+                const catValues = Object.keys(catData).length ? Object.values(catData) : [40000, 25000, 15000, 10000, 5000];
+
+                new Chart(catCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: catLabels,
+                        datasets: [{
+                            data: catValues,
+                            backgroundColor: ['#1B2A4A', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+            /*]]>*/
+        </script>
+    </div>
+</body>
+</html>

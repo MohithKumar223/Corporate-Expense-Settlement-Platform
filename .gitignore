@@ -1,0 +1,29 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE
+.idea/
+*.iml
+*.iws
+.vscode/
+*.code-workspace
+.project
+.classpath
+.settings/
+bin/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Application
+uploads/*
+!uploads/.gitkeep
+*.log
+application-local.properties
+.env

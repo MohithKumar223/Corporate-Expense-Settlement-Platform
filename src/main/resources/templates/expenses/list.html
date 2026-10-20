@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Expense Claims</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Expense Claims</h2>
+                <p class="text-muted mb-0">Record, review, and validate corporate out-of-pocket & advance expenses</p>
+            </div>
+            <div>
+                <a th:href="@{/expenses/create}" class="btn btn-navy">
+                    <i class="bi bi-plus-lg me-1"></i> Submit Expense
+                </a>
+            </div>
+        </div>
+
+        <div class="data-table-wrapper">
+            <div class="table-header">
+                <h5>All Expenses</h5>
+                <input type="text" id="tableSearch" class="form-control form-control-sm" placeholder="Search expenses..." style="max-width: 200px;">
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th sec:authorize="hasRole('FINANCE_ADMIN')">Employee</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Linked Advance</th>
+                            <th>Expense Date</th>
+                            <th>Amount</th>
+                            <th>Receipt</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(expenses)}">
+                            <td colspan="10" class="text-center py-4 text-muted">
+                                <i class="bi bi-receipt fs-3 d-block mb-1"></i> No expenses submitted yet
+                            </td>
+                        </tr>
+                        <tr th:each="exp : ${expenses}">
+                            <td class="fw-bold" th:text="${'#EXP-' + exp.id}">#EXP-1</td>
+                            <td sec:authorize="hasRole('FINANCE_ADMIN')">
+                                <span class="fw-semibold" th:text="${exp.employee.fullName}">John</span>
+                                <div class="small text-muted" th:text="${exp.employee.department}">Dept</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${exp.category}">Travel</span>
+                            </td>
+                            <td th:text="${exp.description}">Taxi fare</td>
+                            <td>
+                                <span th:if="${exp.advanceRequest != null}" class="badge bg-secondary-subtle text-secondary"
+                                      th:text="${exp.advanceRequest.requestNumber}">ADV-101</span>
+                                <span th:if="${exp.advanceRequest == null}" class="text-muted small">Out of Pocket</span>
+                            </td>
+                            <td th:text="${#temporals.format(exp.expenseDate, 'dd MMM yyyy')}">02 Jan 2026</td>
+                            <td class="fw-bold text-navy">₹<span th:text="${#numbers.formatDecimal(exp.amount, 1, 'COMMA', 2, 'POINT')}">1,500</span></td>
+                            <td>
+                                <span th:if="${exp.receiptPath != null}" class="badge bg-success-subtle text-success">
+                                    <i class="bi bi-paperclip"></i> Attached
+                                </span>
+                                <span th:if="${exp.receiptPath == null}" class="badge bg-light text-muted">None</span>
+                            </td>
+                            <td>
+                                <span class="badge-status"
+                                      th:classappend="${'badge-' + #strings.toLowerCase(exp.status)}"
+                                      th:text="${exp.status}">SUBMITTED</span>
+                            </td>
+                            <td>
+                                <a th:href="@{'/expenses/view/' + ${exp.id}}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

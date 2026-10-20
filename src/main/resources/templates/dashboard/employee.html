@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Employee Dashboard</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Employee Dashboard</h2>
+                <p class="text-muted mb-0">Overview of your advance requests, expenses, and settlements</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/advances/create}" class="btn btn-navy">
+                    <i class="bi bi-plus-circle me-1"></i> Request Advance
+                </a>
+                <a th:href="@{/expenses/create}" class="btn btn-accent">
+                    <i class="bi bi-receipt me-1"></i> Submit Expense
+                </a>
+            </div>
+        </div>
+
+        <!-- Summary KPI Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="card-label">Total Requested</div>
+                            <div class="card-value">₹<span th:text="${totalRequested != null ? #numbers.formatDecimal(totalRequested, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span></div>
+                        </div>
+                        <div class="card-icon icon-primary">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="card-label">Advances</div>
+                            <div class="card-value" th:text="${totalAdvances}">0</div>
+                        </div>
+                        <div class="card-icon icon-info">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="card-label">Pending Approval</div>
+                            <div class="card-value" th:text="${pendingApprovals}">0</div>
+                        </div>
+                        <div class="card-icon icon-warning">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="card-label">Expenses Logged</div>
+                            <div class="card-value" th:text="${totalExpenses}">0</div>
+                        </div>
+                        <div class="card-icon icon-success">
+                            <i class="bi bi-receipt-cutoff"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Recent Advances -->
+            <div class="col-lg-7">
+                <div class="data-table-wrapper mb-4">
+                    <div class="table-header">
+                        <h5>Recent Advance Requests</h5>
+                        <a th:href="@{/advances}" class="btn btn-sm btn-outline-secondary">View All</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Req #</th>
+                                    <th>Purpose</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(recentAdvances)}">
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-3 d-block mb-1"></i> No advance requests yet
+                                    </td>
+                                </tr>
+                                <tr th:each="adv : ${recentAdvances}">
+                                    <td class="fw-bold" th:text="${adv.requestNumber}">ADV-001</td>
+                                    <td th:text="${adv.purpose}">Business Travel</td>
+                                    <td class="fw-semibold">₹<span th:text="${#numbers.formatDecimal(adv.requestedAmount, 1, 'COMMA', 2, 'POINT')}">10,000</span></td>
+                                    <td th:text="${#temporals.format(adv.requestDate, 'dd MMM yyyy')}">01 Jan 2026</td>
+                                    <td>
+                                        <span class="badge-status"
+                                              th:classappend="${'badge-' + #strings.toLowerCase(#strings.replace(adv.status, '_', ''))}"
+                                              th:text="${adv.status}">PENDING</span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{'/advances/view/' + ${adv.id}}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Recent Expenses -->
+                <div class="data-table-wrapper">
+                    <div class="table-header">
+                        <h5>Recent Expenses</h5>
+                        <a th:href="@{/expenses}" class="btn btn-sm btn-outline-secondary">View All</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(recentExpenses)}">
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        <i class="bi bi-receipt fs-3 d-block mb-1"></i> No expenses submitted yet
+                                    </td>
+                                </tr>
+                                <tr th:each="exp : ${recentExpenses}">
+                                    <td class="fw-semibold" th:text="${exp.category}">Travel</td>
+                                    <td th:text="${exp.description}">Flight tickets</td>
+                                    <td class="fw-semibold">₹<span th:text="${#numbers.formatDecimal(exp.amount, 1, 'COMMA', 2, 'POINT')}">2,500</span></td>
+                                    <td th:text="${#temporals.format(exp.expenseDate, 'dd MMM yyyy')}">02 Jan 2026</td>
+                                    <td>
+                                        <span class="badge-status"
+                                              th:classappend="${'badge-' + #strings.toLowerCase(exp.status)}"
+                                              th:text="${exp.status}">SUBMITTED</span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{'/expenses/view/' + ${exp.id}}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settlement Overview & Notifications -->
+            <div class="col-lg-5">
+                <div class="data-table-wrapper mb-4">
+                    <div class="table-header">
+                        <h5>Settlement Records</h5>
+                        <a th:href="@{/settlements}" class="btn btn-sm btn-outline-secondary">View All</a>
+                    </div>
+                    <div class="p-3">
+                        <div th:if="${#lists.isEmpty(settlements)}" class="empty-state py-3">
+                            <i class="bi bi-calculator fs-2 text-muted"></i>
+                            <p class="mb-0 small">No settlements calculated yet.</p>
+                        </div>
+                        <div th:each="set : ${settlements}" class="border rounded p-3 mb-2 bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold" th:text="${set.advanceRequest.requestNumber}">ADV-101</span>
+                                <span class="badge-status"
+                                      th:classappend="${'badge-' + #strings.toLowerCase(#strings.replace(set.status, '_', ''))}"
+                                      th:text="${set.status}">COMPLETED</span>
+                            </div>
+                            <div class="small text-muted mb-2" th:text="${set.advanceRequest.purpose}">Client meeting</div>
+                            <div class="d-flex justify-content-between small">
+                                <span>Disbursed: ₹<span th:text="${#numbers.formatDecimal(set.totalDisbursed, 1, 'COMMA', 2, 'POINT')}">10,000</span></span>
+                                <span>Expenses: ₹<span th:text="${#numbers.formatDecimal(set.totalValidatedExpenses, 1, 'COMMA', 2, 'POINT')}">8,000</span></span>
+                            </div>
+                            <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-navy" th:text="${set.status.name() == 'PENDING_RECOVERY' ? 'To Recover: ₹' + set.recoveryAmount : (set.status.name() == 'PENDING_REIMBURSEMENT' ? 'Reimbursement: ₹' + set.reimbursementAmount : 'Settled')}">Settled</span>
+                                <a th:href="@{'/settlements/view/' + ${set.id}}" class="btn btn-sm btn-outline-navy">Details</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="data-table-wrapper">
+                    <div class="table-header">
+                        <h5>Recent Notifications</h5>
+                        <a th:href="@{/notifications}" class="btn btn-sm btn-outline-secondary">All</a>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <div th:if="${#lists.isEmpty(notifications)}" class="p-3 text-center text-muted small">
+                            <i class="bi bi-bell-slash fs-3 d-block mb-1"></i> No unread notifications
+                        </div>
+                        <div th:each="notif : ${notifications}" class="list-group-item p-3">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <strong class="small" th:text="${notif.type}">UPDATE</strong>
+                                <small class="text-muted" th:text="${#temporals.format(notif.createdAt, 'dd MMM HH:mm')}">10:00</small>
+                            </div>
+                            <p class="mb-1 small text-muted" th:text="${notif.message}">Notification message text</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

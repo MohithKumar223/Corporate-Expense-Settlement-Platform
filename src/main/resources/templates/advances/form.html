@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Request Cash Advance</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Request Cash Advance</h2>
+                <p class="text-muted mb-0">Submit a formal advance request for official business or travel expenses</p>
+            </div>
+            <a th:href="@{/advances}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="form-card">
+                    <form th:action="@{/advances/save}" th:object="${advance}" method="post">
+                        <input type="hidden" th:field="*{id}">
+
+                        <!-- Policy Info Banner -->
+                        <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+                            <i class="bi bi-info-circle fs-4 me-3"></i>
+                            <div>
+                                <strong class="d-block">Company Advance Policy</strong>
+                                Advance requests must be submitted at least 3 business days in advance. Unsettled previous advances must be resolved prior to new disbursements.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Purpose of Advance *</label>
+                            <input type="text" th:field="*{purpose}" class="form-control" placeholder="e.g. Client Site Visit to Mumbai / Conference Attendance" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Requested Amount (₹) *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" step="0.01" min="100" th:field="*{requestedAmount}" class="form-control" placeholder="15000.00" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Needed By Date *</label>
+                                <input type="date" th:field="*{neededByDate}" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Expected Return / Completion Date</label>
+                                <input type="date" th:field="*{returnDate}" class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Department</label>
+                                <input type="text" class="form-control bg-light" th:value="${employee != null ? employee.department : ''}" readonly>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Business Justification & Breakdown *</label>
+                            <textarea th:field="*{justification}" class="form-control" rows="4" placeholder="Detail the expected expenses (e.g. Flight ₹8000, Hotel ₹5000, Meals ₹2000)..." required></textarea>
+                        </div>
+
+                        <!-- Applicable active policies info -->
+                        <div class="card bg-light border-0 mb-4" th:if="${not #lists.isEmpty(policies)}">
+                            <div class="card-body py-2">
+                                <span class="fw-semibold small text-muted">Active Policy Guidance:</span>
+                                <div class="d-flex flex-wrap gap-2 mt-1">
+                                    <span th:each="pol : ${policies}" class="badge bg-white text-dark border">
+                                        <span th:text="${pol.category}">Category</span>: ₹<span th:text="${pol.maxLimit}">0</span> limit
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <button type="submit" name="submitNow" value="false" class="btn btn-outline-secondary">
+                                <i class="bi bi-save me-1"></i> Save as Draft
+                            </button>
+                            <button type="submit" name="submitNow" value="true" class="btn btn-navy">
+                                <i class="bi bi-send me-1"></i> Submit for Approval
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

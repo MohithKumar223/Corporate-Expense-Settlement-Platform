@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Financial Exceptions</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Financial Exceptions & Audit Flags</h2>
+                <p class="text-muted mb-0">Track compliance deviations, disputed claims, and policy limit breaches</p>
+            </div>
+        </div>
+
+        <div class="data-table-wrapper">
+            <div class="table-header">
+                <h5>All Exceptions</h5>
+                <input type="text" id="tableSearch" class="form-control form-control-sm" placeholder="Search exceptions..." style="max-width: 200px;">
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Related Entity</th>
+                            <th>Status</th>
+                            <th>Created Date</th>
+                            <th>Investigator</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(exceptions)}">
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-shield-check fs-1 text-success d-block mb-2"></i>
+                                <h5>Zero Exceptions Flagged!</h5>
+                                <p class="small mb-0">No active policy violations or disputed financial records found.</p>
+                            </td>
+                        </tr>
+                        <tr th:each="ex : ${exceptions}">
+                            <td class="fw-bold" th:text="${'#EX-' + ex.id}">#EX-1</td>
+                            <td>
+                                <span class="badge bg-danger-subtle text-danger" th:text="${ex.exceptionType}">POLICY_LIMIT_EXCEEDED</span>
+                            </td>
+                            <td th:text="${ex.description}">Amount exceeded by 20%</td>
+                            <td>
+                                <span class="small text-muted" th:text="${ex.entityType + ' #' + ex.entityId}">Expense #5</span>
+                            </td>
+                            <td>
+                                <span class="badge-status"
+                                      th:classappend="${ex.status.name() == 'OPEN' ? 'badge-open' : (ex.status.name() == 'UNDER_INVESTIGATION' ? 'badge-pending' : (ex.status.name() == 'RESOLVED' ? 'badge-resolved' : 'badge-closed'))}"
+                                      th:text="${ex.status}">OPEN</span>
+                            </td>
+                            <td th:text="${#temporals.format(ex.createdAt, 'dd MMM yyyy HH:mm')}">Date</td>
+                            <td class="small" th:text="${ex.investigatedBy != null ? ex.investigatedBy.fullName : 'Unassigned'}">Unassigned</td>
+                            <td>
+                                <a th:href="@{'/exceptions/view/' + ${ex.id}}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye me-1"></i> Review
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

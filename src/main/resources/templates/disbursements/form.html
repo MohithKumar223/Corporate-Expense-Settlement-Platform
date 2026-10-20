@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Process Disbursement</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="page-header">
+            <div>
+                <h2>Process Advance Disbursement</h2>
+                <p class="text-muted mb-0">Record fund payment for approved advance request</p>
+            </div>
+            <a th:href="@{/disbursements}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Disbursements
+            </a>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Advance Summary Card -->
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold text-navy mb-0" th:text="${advance.requestNumber}">ADV-101</h5>
+                            <span class="badge bg-success-subtle text-success">APPROVED</span>
+                        </div>
+                        <div class="row g-2 text-muted small">
+                            <div class="col-sm-6">Employee: <strong class="text-dark" th:text="${advance.employee.fullName}">Jane</strong></div>
+                            <div class="col-sm-6">Department: <strong class="text-dark" th:text="${advance.department}">Sales</strong></div>
+                            <div class="col-sm-6">Approved Amount: <strong class="text-navy">₹<span th:text="${#numbers.formatDecimal(advance.requestedAmount, 1, 'COMMA', 2, 'POINT')}">15,000</span></strong></div>
+                            <div class="col-sm-6">Already Disbursed: <strong class="text-warning">₹<span th:text="${alreadyDisbursed != null ? #numbers.formatDecimal(alreadyDisbursed, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</span></strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Disbursement Form -->
+                <div class="form-card">
+                    <form th:action="@{/disbursements/save}" th:object="${disbursement}" method="post">
+                        <input type="hidden" name="advanceRequestId" th:value="${advance.id}">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Disbursement Amount (₹) *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" step="0.01" min="1" th:field="*{disbursedAmount}"
+                                           class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Payment Method *</label>
+                                <select th:field="*{paymentMethod}" class="form-select" required>
+                                    <option value="BANK_TRANSFER">Direct Bank Transfer (NEFT / RTGS / IMPS)</option>
+                                    <option value="CORPORATE_CARD">Corporate Card Load</option>
+                                    <option value="CHEQUE">Cheque</option>
+                                    <option value="CASH">Petty Cash</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Transaction / UTR Reference # *</label>
+                                <input type="text" th:field="*{paymentReference}" class="form-control" placeholder="e.g. UTR-98234823901" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Payment Date *</label>
+                                <input type="date" th:field="*{paymentDate}" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Disbursement Notes / Remarks</label>
+                            <textarea th:field="*{financeRemarks}" class="form-control" rows="3" placeholder="Optional notes regarding the disbursement..."></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a th:href="@{/disbursements}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-navy">
+                                <i class="bi bi-check2-circle me-1"></i> Record & Confirm Disbursement
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
